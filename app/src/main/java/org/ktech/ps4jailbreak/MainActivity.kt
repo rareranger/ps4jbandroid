@@ -6,21 +6,22 @@ import android.os.Bundle
 import android.text.format.Formatter.formatIpAddress
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.Spinner
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import java.lang.StringBuilder
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity(){
 
     //HTTP server
     lateinit var server: NanoServer
+    //WifiManager
+    lateinit var wifiManager: WifiManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,8 +29,8 @@ class MainActivity : AppCompatActivity(){
         setSupportActionBar(findViewById(R.id.toolbar))
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            Toast.makeText(this, "Closing app.", Toast.LENGTH_LONG).show()
+            exitProcess(0)
         }
 
         //Create an array list of items to be displayed in the spinner underneath the start button
@@ -46,16 +47,38 @@ class MainActivity : AppCompatActivity(){
         //Initialize the NanoHTTPD server custom class passing the context so we can access resources in the assets folder
         server = NanoServer(this)
 
+        log("Logging enabled...")
+
+        server.onLogMessage = {
+            log(it)
+        }
+
+        //Get WifiManager Service so we can retrieve our WiFi IP Address
+        wifiManager = getApplicationContext().getSystemService(Context.WIFI_SERVICE) as WifiManager
+
         //Setup event for when the start button is clicked
         findViewById<Button>(R.id.btnStartServer).setOnClickListener {
-            //Start the NanoHTTPD server
-            server.start()
-            //Get WifiManager Service so we can retrieve the IP Address
-            val wm: WifiManager = getApplicationContext().getSystemService(Context.WIFI_SERVICE) as WifiManager
+            //Only start NanoHTTPD server if its not already running
+            if (!server.isAlive) {
+                log("Starting server...")
+                server.start()
+            } else {
+                log("Server is already running...")
+                Toast.makeText(this, "Server is already running...", Toast.LENGTH_LONG).show()
+            }
+
             //Convert IP address to readable string
-            val serverIP = formatIpAddress(wm.connectionInfo.ipAddress)
+            val serverIP = formatIpAddress(wifiManager.connectionInfo.ipAddress)
             //Update the TextView above the Start button with below text
             findViewById<TextView>(R.id.txtVWStatus).text = "Visit \"http://$serverIP:8080/\" in PS4 browser"
+        }
+    }
+
+    private fun log(message: String) {
+        runOnUiThread{
+            val logTextView = findViewById<TextView>(R.id.txtVwLog)
+            logTextView.append(message)
+            logTextView.append("\n")
         }
     }
 

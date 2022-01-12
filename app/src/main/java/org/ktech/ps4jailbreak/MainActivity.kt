@@ -33,7 +33,6 @@ class MainActivity : AppCompatActivity(){
 
         val items: ArrayList<String> = ArrayList()
         items.add("GoldHen 2.0")
-        items.add("Add new payload...")
         val x = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items)
 
         findViewById<Spinner>(R.id.spnrPayload).adapter = x
@@ -44,7 +43,7 @@ class MainActivity : AppCompatActivity(){
             server.start()
             val wm: WifiManager = getApplicationContext().getSystemService(Context.WIFI_SERVICE) as WifiManager
             val ip = formatIpAddress(wm.connectionInfo.ipAddress)
-            findViewById<TextView>(R.id.txtVWStatus).text = "Visit \"http://$ip/8080/\" in PS4 browser"
+            findViewById<TextView>(R.id.txtVWStatus).text = "Visit \"http://$ip:8080/\" in PS4 browser"
         }
     }
 

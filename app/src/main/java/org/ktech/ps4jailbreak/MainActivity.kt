@@ -19,6 +19,7 @@ import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity(){
 
+    //HTTP server
     lateinit var server: NanoServer
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,19 +32,30 @@ class MainActivity : AppCompatActivity(){
                 .setAction("Action", null).show()
         }
 
+        //Create an array list of items to be displayed in the spinner underneath the start button
         val items: ArrayList<String> = ArrayList()
+        //Add items to the list
+        //TODO: Allow user to add custom payloads
         items.add("GoldHen 2.0")
-        val x = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items)
 
-        findViewById<Spinner>(R.id.spnrPayload).adapter = x
+        //Create adapter from items list
+        val spinnerAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items)
+        //Use created adapter on the spinner
+        findViewById<Spinner>(R.id.spnrPayload).adapter = spinnerAdapter
 
+        //Initialize the NanoHTTPD server custom class passing the context so we can access resources in the assets folder
         server = NanoServer(this)
 
-        val set = findViewById<Button>(R.id.btnStartServer).setOnClickListener {
+        //Setup event for when the start button is clicked
+        findViewById<Button>(R.id.btnStartServer).setOnClickListener {
+            //Start the NanoHTTPD server
             server.start()
+            //Get WifiManager Service so we can retrieve the IP Address
             val wm: WifiManager = getApplicationContext().getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val ip = formatIpAddress(wm.connectionInfo.ipAddress)
-            findViewById<TextView>(R.id.txtVWStatus).text = "Visit \"http://$ip:8080/\" in PS4 browser"
+            //Convert IP address to readable string
+            val serverIP = formatIpAddress(wm.connectionInfo.ipAddress)
+            //Update the TextView above the Start button with below text
+            findViewById<TextView>(R.id.txtVWStatus).text = "Visit \"http://$serverIP:8080/\" in PS4 browser"
         }
     }
 

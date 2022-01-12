@@ -3,6 +3,7 @@ package org.ktech.ps4jailbreak
 import android.content.Context
 import android.util.Log
 import fi.iki.elonen.NanoHTTPD
+import java.io.InputStream
 import java.net.Socket
 
 //Initialize NanoHTTPD server on port 8080
@@ -12,6 +13,15 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
     var context: Context = current
     //
     var lastPS4: String? = null
+
+    var payloadName: String = ""
+
+    var payloadStream: InputStream? = null
+
+    public fun load_payload(name:String, stream: InputStream?) {
+        payloadName = name
+        payloadStream = stream
+    }
 
     //Handle connection from (hopefully) PS4
     //TODO: Check if device is a PS4 and if it is running Firmware 9.0
@@ -59,13 +69,18 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
                     and kexploit.js:640
              */
             "/log/done" -> {
-                onLogMessage("Sending payload to PS4 with IP $clientIP on port 9020...")
                 //Setup a connection to the PS4 to send the payload on port 9020
                 val outSock = Socket(clientIP, 9020)
                 val outStream = outSock.getOutputStream()
                 //Send the payload from the assets folder to the PS4 then close the connection
-                //TODO: Allow user to send other payloads
-                outStream.write(getResourceAsBytes("payload/goldhen_2.0b2_900.bin"))
+                //TODO: Allow user to send other
+                if (payloadName == "") {
+                    onLogMessage("Sending GoldHen payload to PS4 with IP $clientIP on port 9020...")
+                    outStream.write(getResourceAsBytes("payload/goldhen_2.0b2_900.bin"))
+                } else {
+                    onLogMessage("Sending $payloadName payload to PS4 with IP $clientIP on port 9020...")
+                    outStream.write(payloadStream?.readBytes())
+                }
                 outStream.flush()
                 outStream.close()
                 outSock.close()

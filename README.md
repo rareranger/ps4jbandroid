@@ -2,6 +2,9 @@
 
 pOOBs4 PS4 exploit for v9.0 + automatic gold hen android app
 
+# Note to Devs
+Feel free to fork this or whatever to create a better app.
+
 # About
 This is an android app that creates a http server and serves the pOOBs4 exploit. After the exploit is loaded the GoldHen payload is sent automatically.
 

@@ -16,6 +16,9 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.net.Socket
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.system.exitProcess
@@ -34,6 +37,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     lateinit var payloads: MutableSet<String>
 
     lateinit var items: ArrayList<String>
+
+    var customPayload: Uri? = null
 
     val ADD_CUSTOM_PAYLOAD_STRING: String = "Add custom payload..."
 
@@ -58,9 +63,15 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         updateSpinnerItems()
 
         findViewById<Spinner>(R.id.spnrPayload).onItemSelectedListener = this
+        findViewById<Spinner>(R.id.spnrManualPayload).onItemSelectedListener = this
 
         //Initialize the NanoHTTPD server custom class passing the context so we can access resources in the assets folder
         server = NanoServer(this)
+        server.lastPS4 = sharedPreferences.getString("lastPS4", null)
+
+        if (server.lastPS4 != null) {
+            findViewById<TextView>(R.id.txtVwPS4IP).text = "PS4 Last IP Address: ${server.lastPS4}"
+        }
 
         log("Logging enabled...")
 
@@ -88,26 +99,36 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             findViewById<TextView>(R.id.txtVWStatus).text = "Visit \"http://$serverIP:8080/\" in PS4 browser"
         }
 
+        findViewById<Button>(R.id.btnSendPayload).setOnClickListener {
+            if (customPayload != null) {
+                sendPayload(customPayload!!)
+            } else {
+                showToast("Add and choose a payload to send!")
+            }
+        }
     }
 
     private fun updateSpinnerItems() {
         items = ArrayList()
+        val items2: ArrayList<String> = ArrayList()
+
         items.add("GoldHen 2.0")
         for (pl in payloads) {
             val uri = Uri.parse(pl)
             val fname = uri.path.toString().substringAfterLast("/")
             items.add(fname)
+            items2.add(fname)
         }
 
         items.add(ADD_CUSTOM_PAYLOAD_STRING)
+        items2.add(ADD_CUSTOM_PAYLOAD_STRING)
         //Create adapter from items list
         val spinnerAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items)
+        val spinnerAdapter2 = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items2)
         //Use created adapter on the spinner
         findViewById<Spinner>(R.id.spnrPayload).adapter = spinnerAdapter
+        findViewById<Spinner>(R.id.spnrManualPayload).adapter = spinnerAdapter2
     }
-
-    // Request code for selecting a PDF document.
-
 
     fun openFile(pickerInitialUri: Uri) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -155,17 +176,63 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         // parent.getItemAtPosition(pos)
         val item = parent.getItemAtPosition(pos).toString()
 
+        //Log.d("LOG", parent.toString())
+
         if (item == ADD_CUSTOM_PAYLOAD_STRING) {
             openFile(Uri.parse("/"))
-        } else {
+        } else if (parent == findViewById<Spinner>(R.id.spnrPayload)) {
             if (pos == 0) {
                 server.load_payload("", null)
             } else {
                 val uri = Uri.parse(payloads.elementAtOrNull(pos - 1).toString())
                 val fname = uri.path.toString().substringAfterLast("/")
                 val stream = contentResolver.openInputStream(uri)
+                log(fname)
                 server.load_payload(fname, stream!!)
             }
+        } else {
+            customPayload = Uri.parse(payloads.elementAtOrNull(pos).toString())
+        }
+    }
+
+    private fun sendPayload(payloadUri: Uri) {
+
+        if (server.lastPS4 == null) {
+            showToast("NO PS4 Client in memory")
+            log("!!!")
+            log("NO PS4 Client in memory")
+            log("!!!")
+            log("Please load the exploit using this app at least once so the PS4 IP Address can be saved.")
+            log("!!!")
+            return
+        }
+
+        GlobalScope.launch {
+            val fname = payloadUri.path.toString().substringAfterLast("/")
+            log("Sending $fname payload to PS4 with IP ${server.lastPS4} on port 9090...")
+            var outSock: Socket? = null
+            try {
+                outSock = Socket(server.lastPS4, 9090)
+            } catch (e: java.net.ConnectException) {
+                if (e.message?.contains("ECONNREFUSED") == true) {
+                    log("Failed to connect to port 9090 on PS4. Make sure you have binloader enabled in GoldHen settings.")
+                } else if (e.message?.contains("ENETUNREACH") == true) {
+                    log("Failed to connect to PS4. Make sure WiFi is enabled and you are on the same WiFi network as the PS4.")
+                } else {
+                    Log.e("NET", e.message.toString())
+                }
+                return@launch
+            } catch (e: java.net.NoRouteToHostException) {
+                log("Last stored IP address is invalid or the PS4 is not connected to WiFi")
+                log("To refresh IP address load the exploit again from the app and connect to it on the PS4")
+                return@launch
+            }
+            val outStream = outSock.getOutputStream()
+            val stream = contentResolver.openInputStream(payloadUri)
+            outStream.write(stream?.readBytes())
+            outStream.flush()
+            outStream.close()
+            outSock.close()
         }
     }
 
@@ -173,12 +240,15 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         // Another interface callback
     }
 
-
     private fun log(message: String) {
         runOnUiThread{
             val logTextView = findViewById<TextView>(R.id.txtVwLog)
             logTextView.append(message)
             logTextView.append("\n")
+
+            if (server.lastPS4 != null) {
+                findViewById<TextView>(R.id.txtVwPS4IP).text = "PS4 Last IP Address: ${server.lastPS4}"
+            }
         }
     }
 
@@ -200,6 +270,11 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     private  fun updatePreferences() {
         val editor = sharedPreferences.edit()
+
+        if (server.lastPS4 != null) {
+            editor.putString("lastPS4", server.lastPS4)
+        }
+
         editor.putStringSet("payloads", payloads)
         editor.commit()
     }

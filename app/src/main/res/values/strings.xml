@@ -1,4 +1,9 @@
 <resources>
+    <string name="payload_info">The payload chosen below will be automatically loaded after the
+        exploit has finished working. \n \n Choose <b><u>Add custom payload...</u></b> from the list
+        to choose another one from your device.</string>
+    <string name="manual_payload_info">Choose a payload below and press send to it on port 9090</string>
+    <string name="send_payload">Send Payload to port 9090</string>
     <string name="app_name">PS4 JailBreak</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->

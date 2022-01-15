@@ -11,17 +11,8 @@ import java.net.Socket
 class NanoServer(current: Context): NanoHTTPD(8080) {
     //Store context so we can access assets from main activity
     var context: Context = current
-    //
+    //Store last PS4 ip address
     var lastPS4: String? = null
-
-    var payloadName: String = ""
-
-    var payloadStream: InputStream? = null
-
-    public fun load_payload(name:String, stream: InputStream?) {
-        payloadName = name
-        payloadStream = stream
-    }
 
     //Handle connection from (hopefully) PS4
     //TODO: Check if device is a PS4 and if it is running Firmware 9.0
@@ -52,10 +43,10 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
         if (lastPS4 != clientIP) {
             onLogMessage("PS4 running firmware 9.00 connected with IP Address $clientIP")
             lastPS4 = clientIP
+            onLastPS4Changed()
         } else {
-            onLogMessage("PS4 browser requesting $requestURL")
+            onLogMessage("PS4 browser requesting -> $requestURL")
         }
-
 
         //React to request uri path
         when (requestURL) {
@@ -63,11 +54,7 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
             "/" -> {
                 return NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "text/html", getResourceAsText("index.html"))
             }
-            /* When /log/done is received from the exploit script, send the payload to the PS4
-                log/done is sent from 2 places:
-                    index.html:62 which I added for when the exploit is already running and the page is refreshed
-                    and kexploit.js:640
-             */
+            //When /log/done is received from show the message to user
             "/log/done" -> {
                 onLogMessage("____________________________")
                 onLogMessage("!!!Exploit Complete!!!")
@@ -77,7 +64,6 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
             else -> {
                 //This is a hack to serve all the static files in the assets folder
                 val path = requestURL.drop(1)
-                //if the request path ends with .html then always return the index.html file
                 when {
                     requestURL.endsWith(".html") -> {
                         return NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "text/html", getResourceAsText(path))
@@ -95,8 +81,9 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
         return super.serve(session)
     }
 
+    //Create event to send log messages
     var onLogMessage: ((String) -> Unit) = {}
-
+    //Create event to notify of new PS4 ip address
     var onLastPS4Changed: (() -> Unit) = {}
 
     //get the string contents of a resource from the assets folder using its path

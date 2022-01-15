@@ -9,12 +9,14 @@ import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.text.format.Formatter.formatIpAddress
+import android.text.method.ScrollingMovementMethod
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.PreferenceManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -45,6 +47,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
+    lateinit var listener: SharedPreferences.OnSharedPreferenceChangeListener
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -56,13 +60,23 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             exitProcess(0)
         }
 
-        sharedPreferences = getSharedPreferences("main", Context.MODE_PRIVATE)
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+        listener = SharedPreferences.OnSharedPreferenceChangeListener() { sharedPreferences: SharedPreferences, s: String ->
+            if (s == "lastPS4") {
+                server.lastPS4 = sharedPreferences.getString(s, null)
+                findViewById<TextView>(R.id.txtVwPS4IP).text = "PS4 Last IP Address: ${server.lastPS4}"
+            }
+        }
+
+        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
 
         payloads = HashSet<String>(sharedPreferences.getStringSet("payloads", HashSet<String>()))
 
         updateSpinnerItems()
 
-        findViewById<Spinner>(R.id.spnrPayload).onItemSelectedListener = this
+        findViewById<TextView>(R.id.txtVwLog).movementMethod = ScrollingMovementMethod()
+
         findViewById<Spinner>(R.id.spnrManualPayload).onItemSelectedListener = this
 
         //Initialize the NanoHTTPD server custom class passing the context so we can access resources in the assets folder
@@ -77,6 +91,11 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
         server.onLogMessage = {
             log(it)
+        }
+
+        server.onLastPS4Changed = {
+            updatePreferences()
+            findViewById<TextView>(R.id.txtVwPS4IP).text = "PS4 Last IP Address: ${server.lastPS4}"
         }
 
         //Get WifiManager Service so we can retrieve our WiFi IP Address
@@ -110,24 +129,22 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     private fun updateSpinnerItems() {
         items = ArrayList()
-        val items2: ArrayList<String> = ArrayList()
 
-        items.add("GoldHen 2.0")
+        if (payloads.size == 0) {
+            items.add("No payloads added")
+        }
+
         for (pl in payloads) {
             val uri = Uri.parse(pl)
             val fname = uri.path.toString().substringAfterLast("/")
             items.add(fname)
-            items2.add(fname)
         }
 
         items.add(ADD_CUSTOM_PAYLOAD_STRING)
-        items2.add(ADD_CUSTOM_PAYLOAD_STRING)
         //Create adapter from items list
         val spinnerAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items)
-        val spinnerAdapter2 = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items2)
         //Use created adapter on the spinner
-        findViewById<Spinner>(R.id.spnrPayload).adapter = spinnerAdapter
-        findViewById<Spinner>(R.id.spnrManualPayload).adapter = spinnerAdapter2
+        findViewById<Spinner>(R.id.spnrManualPayload).adapter = spinnerAdapter
     }
 
     fun openFile(pickerInitialUri: Uri) {
@@ -164,10 +181,12 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     private fun showToast(msg: String, long: Boolean = false) {
-        if (long) {
-            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        runOnUiThread {
+            if (long) {
+                Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -180,16 +199,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
         if (item == ADD_CUSTOM_PAYLOAD_STRING) {
             openFile(Uri.parse("/"))
-        } else if (parent == findViewById<Spinner>(R.id.spnrPayload)) {
-            if (pos == 0) {
-                server.load_payload("", null)
-            } else {
-                val uri = Uri.parse(payloads.elementAtOrNull(pos - 1).toString())
-                val fname = uri.path.toString().substringAfterLast("/")
-                val stream = contentResolver.openInputStream(uri)
-                log(fname)
-                server.load_payload(fname, stream!!)
-            }
+            findViewById<Spinner>(R.id.spnrManualPayload).setSelection(0)
         } else {
             customPayload = Uri.parse(payloads.elementAtOrNull(pos).toString())
         }
@@ -202,7 +212,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             log("!!!")
             log("NO PS4 Client in memory")
             log("!!!")
-            log("Please load the exploit using this app at least once so the PS4 IP Address can be saved.")
+            log("Go to Settings and set PS4 IP address.")
             log("!!!")
             return
         }
@@ -224,7 +234,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 return@launch
             } catch (e: java.net.NoRouteToHostException) {
                 log("Last stored IP address is invalid or the PS4 is not connected to WiFi")
-                log("To refresh IP address load the exploit again from the app and connect to it on the PS4")
+                log("Go to Settings and set PS4 IP address.")
+                showToast("Error. Go to Settings to set PS4 IP address.", true)
                 return@launch
             }
             val outStream = outSock.getOutputStream()
@@ -263,8 +274,12 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
+            R.id.action_settings -> {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+                return true
+            }
+            else -> { super.onOptionsItemSelected(item) }
         }
     }
 

@@ -5,7 +5,7 @@ pOOBs4 PS4 exploit for v9.0 + automatic gold hen android app
 # About
 This is an android app that creates a http server and serves the pOOBs4 exploit. After the exploit is loaded the GoldHen payload is sent automatically.
 
-All credit to the team behind pOOBs4 and mc-17 that created the flask package (https://github.com/mc-17/pspack-flask) which I used to create the app.
+All credit to the team behind pOOBs4 and leeful (https://github.com/Leeful/leeful.github.io) for the host files (with caching) which I used to create the app.
 
 # Setup
 1. Download latest apk from releases (https://github.com/rareranger/ps4jbandroid/releases/latest/)

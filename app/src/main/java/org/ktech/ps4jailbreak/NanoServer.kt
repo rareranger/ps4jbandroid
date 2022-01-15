@@ -69,31 +69,26 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
                     and kexploit.js:640
              */
             "/log/done" -> {
-                //Setup a connection to the PS4 to send the payload on port 9020
-                val outSock = Socket(clientIP, 9020)
-                val outStream = outSock.getOutputStream()
-                //Send the payload from the assets folder to the PS4 then close the connection
-                //TODO: Allow user to send other
-                if (payloadName == "") {
-                    onLogMessage("Sending GoldHen payload to PS4 with IP $clientIP on port 9020...")
-                    outStream.write(getResourceAsBytes("payload/goldhen_2.0b2_900.bin"))
-                } else {
-                    onLogMessage("Sending $payloadName payload to PS4 with IP $clientIP on port 9020...")
-                    outStream.write(payloadStream?.readBytes())
-                }
-                outStream.flush()
-                outStream.close()
-                outSock.close()
+                onLogMessage("____________________________")
+                onLogMessage("!!!Exploit Complete!!!")
+                onLogMessage("____________________________")
+                onLogMessage("Enable binloader in GoldHen to send payloads.")
             }
             else -> {
                 //This is a hack to serve all the static files in the assets folder
                 val path = requestURL.drop(1)
                 //if the request path ends with .html then always return the index.html file
-                if ( requestURL.endsWith(".html") ) {
-                    return NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "text/html", getResourceAsText("index.html"))
-                //Else if the request path ends with .js then return the javascript files with the correct mime type
-                } else if ( requestURL.endsWith(".js") ) {
-                    return NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "text/javascript ", getResourceAsText(path))
+                when {
+                    requestURL.endsWith(".html") -> {
+                        return NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "text/html", getResourceAsText(path))
+                        //Else if the request path ends with .js then return the javascript files with the correct mime type
+                    }
+                    requestURL.endsWith(".js") -> {
+                        return NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "text/javascript ", getResourceAsText(path))
+                    }
+                    requestURL.endsWith(".cache") -> {
+                        return NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "text/cache-manifest", getResourceAsText(path))
+                    }
                 }
             }
         }
@@ -101,6 +96,9 @@ class NanoServer(current: Context): NanoHTTPD(8080) {
     }
 
     var onLogMessage: ((String) -> Unit) = {}
+
+    var onLastPS4Changed: (() -> Unit) = {}
+
     //get the string contents of a resource from the assets folder using its path
     private fun getResourceAsText(path: String): String {
         return context.assets.open(path).reader().readText()

@@ -19,16 +19,6 @@
             android:minHeight="100dp"
             android:text="Server Offline" />
 
-        <Button
-            android:id="@+id/btnStartServer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginRight="10dp"
-            android:text="Start Server"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -47,33 +37,16 @@
                 android:gravity="center"
                 android:text="@string/payload_info"/>
 
-            <LinearLayout
+            <Button
+                android:id="@+id/btnStartServer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_marginStart="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginRight="10dp"
+                android:text="Start Server" />
 
-                <TextView
-                    android:id="@+id/lblPayload"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="PayLoad:"
-                    android:textColor="#000000"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <Spinner
-                    android:id="@+id/spnrPayload"
-                    android:layout_width="280dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_marginRight="10dp" />
-            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -146,10 +119,14 @@
         <TextView
             android:id="@+id/txtVwLog"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginStart="15dp"
             android:layout_marginLeft="15dp"
             android:layout_marginEnd="15dp"
-            android:layout_marginRight="15dp" />
+            android:layout_marginRight="15dp"
+            android:layout_marginBottom="15dp"
+            android:gravity="bottom"
+            android:scrollbarStyle="outsideInset"
+            android:scrollbars="vertical" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

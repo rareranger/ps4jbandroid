@@ -1,19 +1,13 @@
 <resources>
     <string name="payload_info">GoldHen 2.0 will be automatically loaded after the
         exploit has finished working.</string>
-    <string name="manual_payload_info">Choose a payload below and press send to it on port 9090</string>
+    <string name="manual_payload_info">Choose a payload below and press the send button to send
+        it to port 9090 on the PS4</string>
     <string name="send_payload">Send Payload to port 9090</string>
     <string name="app_name">PS4 JailBreak</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
-
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="title_activity_settings">Settings</string>
 
     <!-- Preference Titles -->
     <string name="server_header">PS4 Settings</string>

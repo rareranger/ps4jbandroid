@@ -13,6 +13,7 @@ All credit to the team behind pOOBs4 and leeful (https://github.com/Leeful/leefu
 3. Connect your android device and PS4 to the same WiFi
 4. Click "Start Server" and enter the address that's written above the button on the browser on your PS4 to run the exploit
 
-![screenshot3](https://user-images.githubusercontent.com/75229796/149614189-dbfe36e6-0100-4296-81cb-537e9147c79e.jpg)
+![Screenshot_2022-01-16-09-54-12-627_org ktech ps4jailbreak](https://user-images.githubusercontent.com/75229796/149649067-f58cb895-2863-4ae6-bf9c-c1b355adb9f7.jpg)
+
 
 5. You should get the GoldHen notification when it's done.

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.text.format.Formatter.formatIpAddress
@@ -15,11 +16,13 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.InputStream
 import java.lang.Exception
 import java.net.Socket
@@ -28,6 +31,7 @@ import kotlin.collections.ArrayList
 import kotlin.system.exitProcess
 
 const val PICK_BIN_FILE = 2
+const val IMG_FILENAME = "exfathax.img"
 
 class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
@@ -51,6 +55,9 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     //Listener for changing preferences
     lateinit var listener: SharedPreferences.OnSharedPreferenceChangeListener
 
+    lateinit var usbMounter: USBMounter
+
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -137,7 +144,36 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 showToast("Add and choose a payload to send!")
             }
         }
+
+        usbMounter = USBMounter()
+
+        //Setup event for when mount button is clicked
+        findViewById<Button>(R.id.btnMountUSB).setOnClickListener {
+            val imgFileName: String = getFileFromAssets(this, IMG_FILENAME).absolutePath
+            GlobalScope.launch {
+                usbMounter.mount_image(file = imgFileName, toast = this@MainActivity::showToast)
+            }
+        }
+
+        findViewById<Button>(R.id.btnUnmountUSB).setOnClickListener {
+            GlobalScope.launch {
+                usbMounter.unmount_image(toast = this@MainActivity::showToast)
+            }
+        }
+
     }
+
+    fun getFileFromAssets(context: Context, fileName: String): File = File(context.cacheDir, fileName)
+        .also {
+            if (!it.exists()) {
+                it.outputStream().use { cache ->
+                    context.assets.open(fileName).use { inputStream ->
+                        inputStream.copyTo(cache)
+                        inputStream.close()
+                    }
+                }
+            }
+        }
 
     //Update spinner items
     private fun updateSpinnerItems() {
@@ -178,7 +214,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     //Custom function for showing toast message
-    private fun showToast(msg: String, long: Boolean = false) {
+    public fun showToast(msg: String, long: Boolean = false) {
         runOnUiThread {
             if (long) {
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show()

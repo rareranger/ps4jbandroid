@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Array;
 
 public class PathResolver {
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public static String getPath(Context context, Uri uri) {
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;

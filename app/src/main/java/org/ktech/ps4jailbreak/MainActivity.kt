@@ -1,14 +1,18 @@
 package org.ktech.ps4jailbreak
 
+import android.R.string
 import android.app.Activity
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.Cursor
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.text.format.Formatter.formatIpAddress
 import android.text.method.ScrollingMovementMethod
 import android.util.Log
@@ -26,11 +30,11 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.InputStream
-import java.lang.Exception
 import java.net.Socket
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.system.exitProcess
+
 
 const val PICK_BIN_FILE = 2
 const val IMG_FILENAME = "exfathax.img"
@@ -215,8 +219,13 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         //Get filename of each payload and add to items list
         for (pl in payloads) {
             val uri = Uri.parse(pl)
-            val fname = uri.path.toString().substringAfterLast("/")
-            items.add(fname)
+            if (uri.path.toString().endsWith(".bin")) {
+                val fname = uri.path.toString().substringAfterLast("/")
+                items.add(fname)
+            } else {
+                val otherfname = getFileName(uri)
+                items.add(otherfname!!)
+            }
         }
 
         //Add option to add payload from storage
@@ -282,7 +291,13 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
         GlobalScope.launch {
             //Get payload filename
-            val fname = payloadUri.path.toString().substringAfterLast("/")
+            var fname: String = ""
+            if (payloadUri.path.toString().endsWith(".bin")) {
+                fname = payloadUri.path.toString().substringAfterLast("/")
+            } else {
+                fname = getFileName(payloadUri)!!
+            }
+
             log("Sending $fname payload to PS4 with IP ${server.lastPS4} on port 9090...")
             var outSock: Socket? = null
             //Attempt to connect to PS4 and deal with errors
@@ -292,7 +307,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 if (e.message?.contains("ECONNREFUSED") == true) {
                     val msg = "Failed to connect to port 9090 on PS4. Make sure you have binloader enabled in GoldHen settings."
                     log(msg)
-                    showToast(msg,true)
+                    showToast(msg, true)
                 } else if (e.message?.contains("ENETUNREACH") == true) {
                     val msg = "Failed to connect to PS4. Make sure WiFi is enabled and you are on the same WiFi network as the PS4."
                     log(msg)
@@ -314,7 +329,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             } catch (e: java.io.FileNotFoundException) {
                 val msg = "ERROR. Cannot find the payload $fname from internal storage. " +
                         "Try to add it again."
-                showToast(msg,true)
+                showToast(msg, true)
                 log(msg)
                 log("!!!!!Disable and re-enable binloader to send payload again!!!!!")
                 payloads.remove(payloadUri.toString())
@@ -350,7 +365,28 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         editor.commit()
     }
 
+    private fun getFileName(uri: Uri): String? {
+        var cursor: Cursor? = null
+        val projection = arrayOf(
+                MediaStore.MediaColumns.DISPLAY_NAME
+        )
+        try {
+            cursor = contentResolver.query(uri, projection, null, null,
+                    null)
+            if (cursor != null && cursor.moveToFirst()) {
+                val index: Int = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+                return cursor.getString(index)
+            }
+        } finally {
+            if (cursor != null) if (cursor != null) {
+                cursor.close()
+            }
+        }
+        return null
+    }
+
     //Respond to file being picked from file picker
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     override fun onActivityResult(
             requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
@@ -358,12 +394,22 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 && resultCode == Activity.RESULT_OK) {
             resultData?.data?.also { uri ->
                 //Check if the file ends with .bin or do nothing
+                val otherFileName = getFileName(uri)
+
                 if (uri.path?.endsWith(".bin") == true) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
                         contentResolver.takePersistableUriPermission(uri, takeFlags)
                     }
                     payloads.add(uri.toString())
                     updateSpinnerItems()
+                } else if (otherFileName != null) {
+                    if (otherFileName.endsWith(".bin")) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                            contentResolver.takePersistableUriPermission(uri, takeFlags)
+                        }
+                        payloads.add(uri.toString())
+                        updateSpinnerItems()
+                    }
                 }
             }
         }

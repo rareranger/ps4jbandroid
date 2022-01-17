@@ -1,9 +1,8 @@
 {
-    "latestVersion": "3.1-beta",
-    "latestVersionCode": 3.1,
+    "latestVersion": "3.3",
+    "latestVersionCode": 33,
     "url": "https://github.com/rareranger/ps4jbandroid/releases",
     "releaseNotes": [
-      "- Attempt to support new devices",
-      "- General Improvements"
+      "- Fixed bug where adding payload didn't do anything"
     ]
 }

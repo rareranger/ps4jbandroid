@@ -19,6 +19,8 @@ import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
+import com.github.javiersantos.appupdater.AppUpdater
+import com.github.javiersantos.appupdater.enums.UpdateFrom
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -57,6 +59,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     lateinit var usbMounter: USBMounter
 
+    lateinit var appUpdater: AppUpdater
+
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +73,11 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             showToast("Closing app.", true)
             exitProcess(0)
         }
+
+        appUpdater = AppUpdater(this)
+        appUpdater.setUpdateFrom(UpdateFrom.GITHUB)
+        appUpdater.setGitHubUserAndRepo("rareranger", "ps4jbandroid")
+        appUpdater.start()
 
         //Get app preferences
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)

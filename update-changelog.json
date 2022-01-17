@@ -1,0 +1,9 @@
+{
+    "latestVersion": "3.1-beta",
+    "latestVersionCode": 3.1,
+    "url": "https://github.com/rareranger/ps4jbandroid/releases",
+    "releaseNotes": [
+      "- Attempt to support new devices",
+      "- General Improvements"
+    ]
+}

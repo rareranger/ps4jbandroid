@@ -158,6 +158,12 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             GlobalScope.launch {
                 //Attempt to mount image
                 usbMounter.mountImage(imageFile = imgFileName, toast = this@MainActivity::showToast)
+                runOnUiThread {
+                    if (usbMounter.backendType == USBMounter.BACKEND_TYPE.NA) {
+                        findViewById<Button>(R.id.btnMountUSB).isEnabled = false
+                        findViewById<Button>(R.id.btnUnmountUSB).isEnabled = false
+                    }
+                }
             }
         }
 
@@ -165,6 +171,12 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             GlobalScope.launch {
                 //Attempt to unmount image
                 usbMounter.unmount_image(toast = this@MainActivity::showToast)
+                runOnUiThread {
+                    if (usbMounter.backendType == USBMounter.BACKEND_TYPE.NA) {
+                        findViewById<Button>(R.id.btnMountUSB).isEnabled = false
+                        findViewById<Button>(R.id.btnUnmountUSB).isEnabled = false
+                    }
+                }
             }
         }
 

@@ -9,7 +9,7 @@ class USBMounter {
         LUNS, LUN, CONFIGFS, NA
     }
 
-    private var backendType: BACKEND_TYPE? = null
+    var backendType: BACKEND_TYPE? = null
 
     //Create event to send log messages
     var onLogMessage: ((String) -> Unit) = {}
@@ -47,6 +47,7 @@ class USBMounter {
             } catch (e:Shell.ShellDiedException ) {
                 Log.e("ERROR", "Device not rooted or SU missing.")
                 toast("Device not rooted or SU missing.", true)
+                backendType = BACKEND_TYPE.NA
                 return
             }
         }
@@ -158,6 +159,7 @@ class USBMounter {
             } catch (e:Shell.ShellDiedException ) {
                 Log.e("ERROR", "Device not rooted or SU missing.")
                 toast("Device not rooted or SU missing.", true)
+                backendType = BACKEND_TYPE.NA
                 return
             }
         }

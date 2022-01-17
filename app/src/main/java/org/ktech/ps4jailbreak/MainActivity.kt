@@ -75,8 +75,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         }
 
         appUpdater = AppUpdater(this)
-        appUpdater.setUpdateFrom(UpdateFrom.GITHUB)
-        appUpdater.setGitHubUserAndRepo("rareranger", "ps4jbandroid")
+        appUpdater.setUpdateFrom(UpdateFrom.JSON)
+        appUpdater.setUpdateJSON("https://raw.githubusercontent.com/rareranger/ps4jbandroid/master/update-changelog.json")
         appUpdater.start()
 
         //Get app preferences

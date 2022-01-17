@@ -145,18 +145,25 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             }
         }
 
+        //Initialize USBMounter class
         usbMounter = USBMounter()
+        //Log on event
+        usbMounter.onLogMessage = {
+            log(it)
+        }
 
         //Setup event for when mount button is clicked
         findViewById<Button>(R.id.btnMountUSB).setOnClickListener {
             val imgFileName: String = getFileFromAssets(this, IMG_FILENAME).absolutePath
             GlobalScope.launch {
-                usbMounter.mount_image(file = imgFileName, toast = this@MainActivity::showToast)
+                //Attempt to mount image
+                usbMounter.mountImage(imageFile = imgFileName, toast = this@MainActivity::showToast)
             }
         }
 
         findViewById<Button>(R.id.btnUnmountUSB).setOnClickListener {
             GlobalScope.launch {
+                //Attempt to unmount image
                 usbMounter.unmount_image(toast = this@MainActivity::showToast)
             }
         }

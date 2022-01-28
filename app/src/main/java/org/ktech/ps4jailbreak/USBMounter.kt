@@ -201,9 +201,24 @@ class USBMounter {
                 onLogMessage(msg)
             }
         } else if (backendType == BACKEND_TYPE.CONFIGFS) {
-            val msg = "Reboot Device to reset USB for normal usage."
-            toast(msg, true)
-            onLogMessage(msg)
+            val usb = "/config/usb_gadget/g1"
+            try {
+                val exitCode = Shell.Pool.SU.run(arrayOf(
+                        //GET UDC from somewhere first
+                        //Disable USB
+                        "echo -n '' > $usb/UDC",
+                        //Remove UDC configuration
+                        "rm $usb/configs/b.1/f1/mass_storage.0",
+                        //Restore normal state
+                        "setprop sys.usb.config mtp"
+                ))
+                onLogMessage("Operation exited with code: $exitCode...")
+            } catch (e: Shell.ShellDiedException) {
+                val msg = "Device not rooted or SU missing."
+                Log.e("ERROR", msg)
+                toast(msg, true)
+                onLogMessage(msg)
+            }
         }
     }
 

@@ -125,6 +125,20 @@ class USBMounter {
             }
 
             BACKEND_TYPE.CONFIGFS -> {
+                /*
+                    GET UDC
+                    val udc = cat /config/usb_gadget/g1/UDC
+                    
+                    at first disable usb by setttings UDC to null
+                    
+                    echo -n "" > /config/usb_gadget/g1/UDC
+                    
+                    then do below
+                    
+                    and finish with setting UDC again
+                    
+                    echo -n "$udc" > /config/usb_gadget/g1/UDC
+                */
                 val usb = "/config/usb_gadget/g1"
                 try {
                     val exitCode = Shell.Pool.SU.run(arrayOf(

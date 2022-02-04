@@ -11,8 +11,8 @@ android {
         applicationId "org.ktech.ps4jailbreak"
         minSdkVersion 16
         targetSdkVersion 31
-        versionCode 33
-        versionName '3.3'
+        versionCode 34
+        versionName '3.4'
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -1,8 +1,8 @@
 {
-    "latestVersion": "3.3",
-    "latestVersionCode": 33,
+    "latestVersion": "3.4",
+    "latestVersionCode": 34,
     "url": "https://github.com/rareranger/ps4jbandroid/releases",
     "releaseNotes": [
-      "- Fixed bug where adding payload didn't do anything"
+      "- Fixed USB Mounting for some devices with CONFIGFS backend"
     ]
 }

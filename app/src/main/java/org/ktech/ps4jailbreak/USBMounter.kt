@@ -11,6 +11,10 @@ class USBMounter {
 
     var backendType: BACKEND_TYPE? = null
 
+    var UDC: String? = null
+
+    var USB_MODE: String = "mtp"
+
     //Create event to send log messages
     var onLogMessage: ((String) -> Unit) = {}
 
@@ -125,23 +129,24 @@ class USBMounter {
             }
 
             BACKEND_TYPE.CONFIGFS -> {
-                /*
-                    GET UDC
-                    val udc = cat /config/usb_gadget/g1/UDC
-                    
-                    at first disable usb by setttings UDC to null
-                    
-                    echo -n "" > /config/usb_gadget/g1/UDC
-                    
-                    then do below
-                    
-                    and finish with setting UDC again
-                    
-                    echo -n "$udc" > /config/usb_gadget/g1/UDC
-                */
+                get_USB_MODE()
                 val usb = "/config/usb_gadget/g1"
+                val udc = get_UDC()
+                if (udc == "") {
+                    /* GET UDC Devices from /sys/class/udc */
+                    val msg = "Couldn't get default UDC device."
+                    Log.e("ERROR", msg)
+                    toast(msg, true)
+                    onLogMessage(msg)
+                    return
+                } else {
+                    UDC = udc
+                }
+
                 try {
                     val exitCode = Shell.Pool.SU.run(arrayOf(
+                            //Disable USB
+                            "echo -n '' > $usb/UDC",
                             //Set mode to msc
                             "echo -n 'msc' > $usb/configs/b.1/strings/0x409/configuration",
                             //Set vendor and id to Mass Storage Device
@@ -152,7 +157,9 @@ class USBMounter {
                             //Symlink proper config
                             "ln -s $usb/functions/mass_storage.0 $usb/configs/b.1/f1",
                             //Set LUN file from image file
-                            "echo -n $imageFile > $usb/configs/b.1/f1/lun.0/file"
+                            "echo -n $imageFile > $usb/configs/b.1/f1/lun.0/file",
+                            //Re-enable USB
+                            "echo -n $udc > $usb/UDC"
                     ))
                     onLogMessage("Operation exited with code: $exitCode...")
                 } catch (e: Shell.ShellDiedException) {
@@ -162,6 +169,35 @@ class USBMounter {
                     onLogMessage(msg)
                 }
             }
+        }
+    }
+
+    public fun get_UDC(usb: String = "/config/usb_gadget/g1"): String {
+        val STDOUT: List<String> = mutableListOf()
+        val STDERR: List<String> = mutableListOf()
+
+        try {
+            val exitCode = Shell.Pool.SU.run("cat $usb/UDC", STDOUT, STDERR, true)
+            return STDOUT[0]
+        } catch (e: Shell.ShellDiedException) {
+            val msg = "Device not rooted or SU missing."
+            Log.e("ERROR", msg)
+            onLogMessage(msg)
+            return ""
+        }
+    }
+
+    public fun get_USB_MODE(usb: String = "/config/usb_gadget/g1") {
+        val STDOUT: List<String> = mutableListOf()
+        val STDERR: List<String> = mutableListOf()
+
+        try {
+            val exitCode = Shell.Pool.SU.run("getprop sys.usb.config", STDOUT, STDERR, true)
+            USB_MODE = STDOUT[0]
+        } catch (e: Shell.ShellDiedException) {
+            val msg = "Device not rooted or SU missing."
+            Log.e("ERROR", msg)
+            onLogMessage(msg)
         }
     }
 
@@ -210,7 +246,7 @@ class USBMounter {
                         //Remove UDC configuration
                         "rm $usb/configs/b.1/f1/mass_storage.0",
                         //Restore normal state
-                        "setprop sys.usb.config mtp"
+                        "setprop sys.usb.config $USB_MODE"
                 ))
                 onLogMessage("Operation exited with code: $exitCode...")
             } catch (e: Shell.ShellDiedException) {

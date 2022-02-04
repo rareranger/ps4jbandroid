@@ -1,7 +1,7 @@
 {
     "latestVersion": "3.4",
     "latestVersionCode": 34,
-    "url": "https://github.com/rareranger/ps4jbandroid/releases",
+    "url": "https://github.com/rareranger/ps4jbandroid/releases/latest",
     "releaseNotes": [
       "- Fixed USB Mounting for some devices with CONFIGFS backend"
     ]

@@ -150,6 +150,7 @@ class USBMounter {
                             //Set mode to msc
                             "echo -n 'msc' > $usb/configs/b.1/strings/0x409/configuration",
                             //Set vendor and id to Mass Storage Device
+                            //FIX THIS BELOOWW____________________________________________________________
                             "echo -n 05C6 > idVendor",
                             "echo -n 1000 > idProduct",
                             //Clear configs folder

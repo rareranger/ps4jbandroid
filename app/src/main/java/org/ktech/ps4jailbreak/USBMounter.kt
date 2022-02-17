@@ -150,11 +150,12 @@ class USBMounter {
                             //Set mode to msc
                             "echo -n 'msc' > $usb/configs/b.1/strings/0x409/configuration",
                             //Set vendor and id to Mass Storage Device
-                            //FIX THIS BELOOWW____________________________________________________________
-                            "echo -n 05C6 > idVendor",
-                            "echo -n 1000 > idProduct",
+                            "echo -n 05C6 > $usb/idVendor",
+                            "echo -n 1000 > $usb/idProduct",
                             //Clear configs folder
                             "for f in $usb/configs/b.1/f*; do rm \$f; done",
+                            //Attempt to instantiate mass_storage.0 function
+                            "mkdir $usb/functions/mass_storage.0 || true",
                             //Symlink proper config
                             "ln -s $usb/functions/mass_storage.0 $usb/configs/b.1/f1",
                             //Set LUN file from image file
